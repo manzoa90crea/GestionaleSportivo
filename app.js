@@ -9,7 +9,7 @@
  */
 import * as db from './db.js';
 
-const VERSIONE_APP = '1.0.0';
+const VERSIONE_APP = '1.1.0';
 const app = document.getElementById('app');
 const fogli = document.getElementById('scheda');
 const D = { squadre: [], atleti: [], quote: [], pagamenti: [], allenamenti: [], partite: [] };
@@ -229,8 +229,8 @@ const PAGINE = {
     const giorniBackup = IMP.ultimoBackup ? Math.floor((Date.now() - new Date(IMP.ultimoBackup)) / 864e5) : null;
     const avviso = attivi.length && (giorniBackup === null || giorniBackup > 7)
       ? `<a class="avviso" href="#/impostazioni"><span>${giorniBackup === null ? 'Nessun backup ancora fatto' : `Ultimo backup ${plur(giorniBackup, 'giorno', 'giorni')} fa`}</span><b>Esporta</b></a>` : '';
-    const inizio = !D.squadre.length ? `<div class="card"><h3>Benvenuto</h3><p class="muto">Inizia creando la prima squadra, poi aggiungi gli atleti. Per provare l'app puoi caricare dati di esempio inventati.</p>
-      <div class="azioni"><button class="btn prim" data-act="squadraForm">Crea squadra</button><button class="btn" data-act="caricaDemo">Dati di prova</button></div></div>` : '';
+    const inizio = !D.squadre.length ? `<div class="card"><h3>Benvenuto</h3><p class="muto">Inizia creando le squadre, poi aggiungi gli atleti: uno alla volta o incollando un elenco.</p>
+      <div class="azioni una"><button class="btn prim" data-act="squadraForm">Crea la prima squadra</button></div></div>` : '';
     return pagina('home', {
       titolo: IMP.nomeSocieta || 'Gestionale', sotto: `Stagione ${esc(IMP.stagione || stagioneDi(o))}`,
       corpo: `${avviso}${inizio}
@@ -254,6 +254,7 @@ const PAGINE = {
       fab: { act: 'atletaForm', testo: 'Atleta', dati: f.sq ? `data-sq="${f.sq}"` : '' },
       corpo: `<div class="cerca">${icona('cerca')}<input type="search" id="cerca-atleti" placeholder="Cerca per nome o cognome" value="${esc(f.testo)}" autocomplete="off" enterkeyhint="search"></div>
         ${chipsSquadre('atleti', f.sq)}
+        <div class="fila sopra"><button class="btn-piccolo neutro" data-act="incollaAtleti" ${f.sq ? `data-sq="${f.sq}"` : ''}>Incolla elenco atleti</button></div>
         <div id="elenco-atleti">${elencoAtleti()}</div>
         <p class="piccolo"><button class="testo-btn" data-act="filtro" data-o="atleti" data-k="archiviati" data-v="${!f.archiviati}">${f.archiviati ? 'Nascondi archiviati' : 'Mostra anche archiviati'}</button></p>`,
     });
@@ -326,7 +327,7 @@ const PAGINE = {
         <h2>Prossime partite</h2>${prossime.length ? `<div class="lista">${prossime.map(rigaPartita).join('')}</div>` : vuoto('Nessuna partita in programma.')}
         <h2>Partite giocate${giocate.length ? ` · ${v} V, ${pe} P` : ''}</h2>${giocate.length ? `<div class="lista">${giocate.map(rigaPartita).join('')}</div>` : vuoto('Nessuna partita disputata.')}
         <h2>Rosa · ${plur(rosa.length, 'atleta', 'atleti')}</h2>${rosa.length ? `<div class="lista">${rosa.map(rigaAtleta).join('')}</div>` : vuoto('Nessun atleta in questa squadra.')}
-        <div class="azioni una"><button class="btn prim" data-act="atletaForm" data-sq="${s.id}">Aggiungi atleta alla squadra</button></div>`,
+        <div class="azioni"><button class="btn prim" data-act="atletaForm" data-sq="${s.id}">Aggiungi atleta</button><button class="btn" data-act="incollaAtleti" data-sq="${s.id}">Incolla elenco</button></div>`,
     });
   },
 
@@ -360,7 +361,8 @@ const PAGINE = {
     }
     return pagina('pagamenti', {
       titolo: 'Pagamenti', fab: { act: 'pagamentoForm', testo: 'Pagamento' },
-      corpo: seg('pag', 'vista', f.vista, [['insoluti', 'Insoluti'], ['mese', 'Riepilogo mensile']]) + corpo,
+      corpo: seg('pag', 'vista', f.vista, [['insoluti', 'Insoluti'], ['mese', 'Riepilogo mensile']])
+        + `<div class="azioni una"><button class="btn" data-act="incassoVeloce">Incasso veloce per squadra</button></div>` + corpo,
     });
   },
 
@@ -376,6 +378,7 @@ const PAGINE = {
       const rinviate = ['giocate', 'annullate'].includes(f.periodo) ? [] : D.partite.filter(p => p.stato === 'rinviata' && (!f.sq || p.squadraId === f.sq));
       const daChiudere = ['giocate', 'annullate'].includes(f.periodo) ? [] : D.partite.filter(p => p.stato === 'programmata' && p.data < o && (!f.sq || p.squadraId === f.sq));
       corpo = `<div class="chips">${periodi.map(([v, t]) => chip(t, f.periodo === v, 'filtro', `data-o="cal" data-k="periodo" data-v="${v}"`)).join('')}</div>
+        <div class="fila sopra"><button class="btn-piccolo neutro" data-act="incollaPartite" ${f.sq ? `data-sq="${f.sq}"` : ''}>Incolla calendario partite</button></div>
         ${daChiudere.length ? `<h2>Da aggiornare: inserisci il risultato</h2><div class="lista">${daChiudere.map(rigaPartita).join('')}</div>` : ''}
         ${rinviate.length ? `<h2>Rinviate</h2><div class="lista">${rinviate.map(rigaPartita).join('')}</div>` : ''}
         ${lista.length ? `<div class="lista">${lista.map(rigaPartita).join('')}</div>` : vuoto('Nessuna partita in questo periodo.')}`;
@@ -431,8 +434,8 @@ const PAGINE = {
           <div class="azioni"><button class="btn prim" data-act="backupForm">Esporta backup</button><button class="btn" data-act="ripristinoForm">Ripristina</button></div></div>
         <h2>Sicurezza</h2><div class="card"><div class="azioni"><button class="btn" data-act="pinForm">Cambia PIN</button><button class="btn" data-act="blocca">Blocca ora</button></div>
           <p class="muto piccolo">Memoria persistente: ${persistente === true ? '<span class="verde">attiva</span>, Chrome non cancellerà i dati per liberare spazio' : persistente === false ? '<span class="giallo">non concessa</span> da Chrome: installa l\'app sulla schermata principale e fai backup frequenti' : 'non disponibile'}</p></div>
-        <h2>Dati di prova</h2><div class="card"><p class="muto piccolo">Squadre, atleti, pagamenti e partite inventati, per provare l'app. Si cancellano con un tocco senza toccare i dati veri.</p>
-          <div class="azioni">${demo ? '<button class="btn" data-act="eliminaDemo">Elimina dati di prova</button>' : '<button class="btn" data-act="caricaDemo">Carica dati di prova</button>'}</div></div>
+        ${demo ? `<h2>Dati di prova</h2><div class="card"><p class="muto piccolo">Nell'archivio ci sono ancora dati di prova inventati: eliminali prima di usare l'app con i dati veri.</p>
+          <button class="btn" data-act="eliminaDemo">Elimina dati di prova</button></div>` : ''}
         <h2>Zona pericolosa</h2><div class="card"><button class="btn peric" data-act="eliminaTutto">Cancella tutti i dati</button></div>
         <p class="muto piccolo">Gestionale Basket ${VERSIONE_APP} · nessun dato lascia il telefono se non lo esporti tu.</p>`,
     });
@@ -461,7 +464,7 @@ function apriScheda(titolo, corpo, piede, form) {
 }
 function nascondiScheda() { fogli.classList.remove('su'); fogli.innerHTML = ''; document.body.classList.remove('fermo'); schedaAperta = false; }
 function chiudiScheda() { if (!schedaAperta) return; nascondiScheda(); ignoraPop = true; history.back(); }
-function chiudiEVai(indirizzo) { nascondiScheda(); location.replace(indirizzo); }
+function chiudiEVai(indirizzo) { nascondiScheda(); const stesso = location.hash === indirizzo; location.replace(indirizzo); if (stesso) render(); }
 window.addEventListener('popstate', () => {
   if (ignoraPop) { ignoraPop = false; return; }
   if (!schedaAperta) return;
@@ -478,7 +481,7 @@ const opzSquadre = (valore, vuota = '— nessuna —') => [['', vuota], ...D.squ
 
 // ---------------------------------------------------------------- azioni (data-act)
 const AZ = {
-  chiudi: () => (schedaAperta && modificato && !confirm('Uscire senza salvare?') ? null : chiudiScheda()),
+  chiudi() { if (schedaAperta && modificato && !confirm('Uscire senza salvare?')) return; chiudiScheda(); render(); },
   indietro: ({ a }) => (history.length > 1 ? history.back() : (location.hash = a)),
   filtro({ o, k, v }, el) {
     F[o][k] = v === 'true' ? true : v === 'false' ? false : v;
@@ -503,14 +506,17 @@ const AZ = {
       <div class="due">${campo('Cognome *', 'cognome', a.cognome, 'text', 'required autocapitalize="words" autocomplete="off"')}${campo('Nome *', 'nome', a.nome, 'text', 'required autocapitalize="words" autocomplete="off"')}</div>
       <div class="due">${campo('Data di nascita', 'dataNascita', a.dataNascita, 'date')}${campo('Numero di maglia', 'maglia', a.maglia, 'text', 'inputmode="numeric"')}</div>
       ${scelta('Squadra', 'squadraId', opzSquadre(a.squadraId), a.squadraId)}
+      ${genitore(0)}
+      <details class="altri" ${id ? 'open' : ''}><summary>Altri dati: certificato, secondo genitore, contatti</summary>
       ${campo('Scadenza certificato medico', 'scadenzaCertificato', a.scadenzaCertificato, 'date')}
-      ${genitore(0)}${genitore(1)}
-      <div class="blocco-tit">Altri dati</div>
+      ${genitore(1)}
       ${campo("Telefono dell'atleta", 'telefono', a.telefono, 'tel', 'inputmode="tel"')}${campo('Email', 'email', a.email, 'email')}
       ${campo('Codice fiscale', 'codiceFiscale', a.codiceFiscale, 'text', 'maxlength="16" autocapitalize="characters"')}
-      <label>Note<textarea name="note" rows="2">${esc(a.note)}</textarea></label>
+      <label>Note<textarea name="note" rows="2">${esc(a.note)}</textarea></label></details>
       ${id ? `<label class="spunta"><input type="checkbox" name="attivo" ${a.attivo ? 'checked' : ''}> Atleta attivo (togli la spunta per archiviarlo)</label>
-        <button type="button" class="btn peric" data-act="eliminaAtleta" data-id="${id}">Elimina definitivamente</button>` : ''}`, salvaBtn(), 'atleta');
+        <button type="button" class="btn peric" data-act="eliminaAtleta" data-id="${id}">Elimina definitivamente</button>` : ''}`,
+    id ? salvaBtn() : `<button type="submit" class="btn" name="poi" value="altro">Salva e aggiungi</button>${salvaBtn()}`, 'atleta');
+    if (!id && sq) fogli.querySelector('input[name=cognome]')?.focus();
   },
   async eliminaAtleta({ id }) {
     const a = atleta(id);
@@ -652,6 +658,51 @@ const AZ = {
     render();
   },
 
+
+  // --- inserimento rapido
+  incollaAtleti({ sq }) {
+    apriScheda('Incolla elenco atleti', `${scelta('Squadra', 'squadraId', opzSquadre(sq || ''), sq || '')}
+      <label>Un atleta per riga<textarea name="testo" rows="8" placeholder="Rossi Mario 05/04/2013 333 1234567&#10;De Luca; Gennaro Maria; 12/01/2012; 3339876543&#10;Bianchi Luca"></textarea></label>
+      <p class="muto piccolo">Ordine: cognome, nome, data di nascita e telefono (facoltativi). Senza separatori l'ultima parola è il nome; per nomi o cognomi doppi separa i campi con ";". Il telefono va al genitore se l'atleta è minorenne. Funziona anche incollando da WhatsApp o da Excel.</p>
+      <div id="anteprima"></div>`, salvaBtn('Importa'), 'incollaAtleti');
+  },
+  incollaPartite({ sq }) {
+    apriScheda('Incolla calendario partite', `${scelta('Squadra della società *', 'squadraId', opzSquadre(sq || '', 'Scegli…'), sq || '', 'required')}
+      ${campo('Campionato', 'campionato', '', 'text', 'list="dl-camp2" autocomplete="off" placeholder="es. Under 14 Regionale"')}
+      ${campo('Come si chiama la società nel calendario', 'chiave', IMP.parolaChiave || (IMP.nomeSocieta || '').split(/\s+/).pop(), 'text', 'autocomplete="off"')}
+      <label>Una partita per riga<textarea name="testo" rows="8" placeholder="08/11 10:00 Marano - Saviano @ Palamarano&#10;14/11 20:00 casa Basket Aurora&#10;21/11/2026 18:30 trasferta Portici"></textarea></label>
+      <p class="muto piccolo">Per ogni riga servono data e avversario; ora, "casa" o "trasferta" e "@ luogo" sono facoltativi. Se scrivi le due squadre separate da "-", la prima gioca in casa: riconosco la vostra dal nome indicato sopra. Senza indicazione la partita è in casa.</p>
+      <div id="anteprima"></div>${elencoSuggerimenti('dl-camp2', unici(D.partite.map(x => x.campionato)))}`, salvaBtn('Importa'), 'incollaPartite');
+  },
+  incassoVeloce({ sq, mese }) {
+    const squadre = squadreAttive();
+    sq = sq || F.pag.sq || squadre[0]?.id || '';
+    mese = mese || F.pag.mese;
+    const s = squadra(sq);
+    const righe = D.atleti.filter(a => a.attivo && a.squadraId === sq).sort(ordinaAtleti).map(a => {
+      const q = quoteStato(x => x.atletaId === a.id && x.mese === mese)[0];
+      const importo = q ? q.residuo : s?.quotaMensile || 0;
+      const destra = q && q.residuo <= 0 ? '<span class="tag verde">pagata</span>' : !q && !importo ? '<span class="tag">quota non impostata</span>'
+        : `<b class="num">${euro(importo)}</b>${q ? (q.pagato > 0 ? '<br><span class="muto piccolo">resto</span>' : '') : '<br><span class="muto piccolo">crea quota</span>'}`;
+      const attiva = importo > 0;
+      return `<label class="riga voce-check${attiva ? '' : ' spenta'}"><input type="checkbox" name="a" value="${a.id}" ${attiva ? '' : 'disabled'}>
+        <span class="testo"><strong>${esc(nomeAtleta(a))}</strong></span><span class="destra">${destra}</span></label>`;
+    });
+    apriScheda('Incasso veloce', `<div class="due">${scelta('Squadra', 'squadraId', squadre.map(x => [x.id, x.nome]), sq, 'data-ricarica')}
+        <label>Mese<input type="month" name="mese" value="${mese}" data-ricarica required></label></div>
+      <div class="due">${scelta('Metodo', 'metodo', [['contanti', 'Contanti'], ['bonifico', 'Bonifico'], ['pos', 'POS / carta'], ['satispay', 'Satispay'], ['altro', 'Altro']], 'contanti')}
+        ${campo('Data', 'data', oggi(), 'date', 'required')}</div>
+      <p class="muto piccolo">Spunta chi ha pagato la quota di ${nomeMese(mese).toLowerCase()}${s?.quotaMensile ? ` (${euro(s.quotaMensile)})` : ''}. Se la quota del mese non esiste ancora la creo io.</p>
+      ${righe.length ? `<p><button type="button" class="testo-btn" data-act="spuntaTutti">Seleziona tutti</button></p><div class="lista">${righe.join('')}</div>` : vuoto('Nessun atleta attivo in questa squadra.')}`,
+    salvaBtn('Registra incassi'), 'incassoVeloce');
+  },
+  spuntaTutti(_, el) {
+    const caselle = [...fogli.querySelectorAll('input[name=a]:not(:disabled)')];
+    const tutte = caselle.every(c => c.checked);
+    caselle.forEach(c => (c.checked = !tutte));
+    el.textContent = tutte ? 'Seleziona tutti' : 'Deseleziona tutti';
+  },
+
   // --- impostazioni, PIN, backup
   pinForm() {
     apriScheda('Cambia PIN', `${campo('PIN attuale', 'attuale', '', 'password', 'inputmode="numeric" pattern="[0-9]{4,6}" required autocomplete="off"')}
@@ -702,14 +753,6 @@ const AZ = {
     chiudiEVai('#/home');
     render();
   },
-  async caricaDemo() {
-    if (D.squadre.some(x => !x.demo) || D.atleti.some(x => !x.demo)) return toast("I dati di prova si caricano solo con l'archivio vuoto, per non mescolarli ai dati veri", true);
-    if (!confirm('Caricare squadre, atleti, pagamenti e partite inventati per provare l\'app?')) return;
-    await caricaDatiDiProva();
-    toast('Dati di prova caricati');
-    location.hash = '#/home';
-    render();
-  },
   async eliminaDemo() {
     if (!confirm('Eliminare tutti i dati di prova? I dati inseriti da te restano.')) return;
     await elimina(Object.fromEntries(Object.keys(D).map(s => [s, D[s].filter(x => x.demo).map(x => x.id)])));
@@ -739,6 +782,11 @@ const FORM = {
     const doppio = D.atleti.find(x => x.id !== d.id && norm(x.cognome) === norm(a.cognome) && norm(x.nome) === norm(a.nome) && (x.dataNascita || '') === (a.dataNascita || ''));
     if (doppio && !confirm('Esiste già un atleta con lo stesso nome e la stessa data di nascita. Salvare comunque?')) return;
     const x = await salva('atleti', a);
+    if (d.poi === 'altro') {
+      toast(`${nomeAtleta(x)} salvato: inserisci il prossimo`);
+      AZ.atletaForm({ sq: x.squadraId || '' });
+      return;
+    }
     toast('Atleta salvato');
     if (d.id) { chiudiScheda(); render(); } else chiudiEVai('#/atleta/' + x.id);
   },
@@ -804,6 +852,48 @@ const FORM = {
     if (conflitto && !confirm(`Il campo "${x.campo}" è già occupato da ${squadra(conflitto.squadraId)?.nome} (${conflitto.inizio}–${conflitto.fine}). Salvare comunque?`)) return;
     await salva('allenamenti', x);
     toast('Allenamento salvato');
+    chiudiScheda();
+    render();
+  },
+
+  async incollaAtleti(d, form) {
+    const { righe } = leggiElencoAtleti(form);
+    const nuove = righe.filter(r => !r.doppio);
+    if (!nuove.length) throw new Error(righe.length ? 'Sono tutti già presenti' : 'Nessun atleta riconosciuto: controlla il testo');
+    await salvaMolti('atleti', nuove.map(({ doppio, ...r }) => r));
+    toast(`Importati ${plur(nuove.length, 'atleta', 'atleti')}`);
+    if (d.squadraId) chiudiEVai('#/squadra/' + d.squadraId); else { chiudiScheda(); render(); }
+  },
+  async incollaPartite(d, form) {
+    if (!squadra(d.squadraId)) throw new Error('Scegli la squadra della società');
+    const { righe } = leggiCalendario(form);
+    const nuove = righe.filter(r => !r.doppio);
+    if (!nuove.length) throw new Error(righe.length ? 'Sono tutte già presenti' : 'Nessuna partita riconosciuta: controlla il testo');
+    await salvaMolti('partite', nuove.map(({ doppio, ...r }) => r));
+    if (d.chiave.trim()) await imposta({ parolaChiave: d.chiave.trim() });
+    toast(`Importate ${plur(nuove.length, 'partita', 'partite')}`);
+    chiudiScheda();
+    render();
+  },
+  async incassoVeloce(d, form) {
+    const ids = new FormData(form).getAll('a');
+    if (!ids.length) throw new Error('Spunta almeno un atleta');
+    const giorno = String(Math.min(+IMP.giornoScadenza || 10, 28)).padStart(2, '0');
+    const ora = new Date().toISOString(), timbro = x => ({ ...x, id: crypto.randomUUID(), creato: ora, modificato: ora });
+    const quote = [], pagamenti = [];
+    for (const id of ids) {
+      const a = atleta(id), esistente = quoteStato(q => q.atletaId === id && q.mese === d.mese)[0];
+      const q = esistente || timbro({ atletaId: id, mese: d.mese, descrizione: `Quota ${nomeMese(d.mese)}`, importo: squadra(a.squadraId)?.quotaMensile || 0, scadenza: `${d.mese}-${giorno}` });
+      const importo = esistente ? esistente.residuo : q.importo;
+      if (!(importo > 0)) continue;
+      if (!esistente) quote.push(q);
+      pagamenti.push(timbro({ atletaId: id, data: d.data, importo, metodo: d.metodo, nota: 'incasso veloce', parti: [{ quotaId: q.id, importo }] }));
+    }
+    if (!pagamenti.length) throw new Error('Nessun importo da registrare');
+    await db.scrivi({ quote, pagamenti });
+    D.quote.push(...quote);
+    D.pagamenti.push(...pagamenti);
+    toast(`Registrati ${plur(pagamenti.length, 'incasso', 'incassi')} per ${euro(pagamenti.reduce((t, p) => r2(t + p.importo), 0))}`);
     chiudiScheda();
     render();
   },
@@ -945,13 +1035,23 @@ document.addEventListener('submit', async e => {
   const form = e.target.closest('form[data-form]');
   if (!form) return;
   e.preventDefault();
-  const bottone = form.querySelector('[type=submit]');
-  if (bottone) bottone.disabled = true;
-  try { await FORM[form.dataset.form](Object.fromEntries(new FormData(form)), form); } catch (err) { toast(err.message, true); console.error(err); } finally { if (bottone) bottone.disabled = false; }
+  const dati = Object.fromEntries(new FormData(form, e.submitter));   // prima di disattivare i pulsanti
+  const bottoni = [...form.querySelectorAll('[type=submit]')];
+  bottoni.forEach(b => (b.disabled = true));
+  try { await FORM[form.dataset.form](dati, form); } catch (err) { toast(err.message, true); console.error(err); } finally { bottoni.forEach(b => (b.disabled = false)); }
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'cerca-atleti') { F.atleti.testo = e.target.value; document.getElementById('elenco-atleti').innerHTML = elencoAtleti(); }
   if (fogli.contains(e.target)) modificato = true;
+  const f = e.target.form;
+  if (f?.dataset.form === 'incollaAtleti') document.getElementById('anteprima').innerHTML = anteprimaAtleti(f);
+  if (f?.dataset.form === 'incollaPartite') document.getElementById('anteprima').innerHTML = anteprimaPartite(f);
+});
+document.addEventListener('change', e => {
+  const f = e.target.form;
+  if (e.target.matches('[data-ricarica]')) AZ.incassoVeloce({ sq: f.squadraId.value, mese: f.mese.value });
+  if (f?.dataset.form === 'incollaAtleti') document.getElementById('anteprima').innerHTML = anteprimaAtleti(f);
+  if (f?.dataset.form === 'incollaPartite') document.getElementById('anteprima').innerHTML = anteprimaPartite(f);
 });
 window.addEventListener('hashchange', render);
 
@@ -972,49 +1072,87 @@ function registraServiceWorker() {
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (!ricaricato) { ricaricato = true; location.reload(); } });
 }
 
-// ---------------------------------------------------------------- dati di prova (tutti inventati)
-async function caricaDatiDiProva() {
-  const o = oggi(), m = o.slice(0, 7), mPrima = piuMesi(m, -1), stag = IMP.stagione || stagioneDi(o);
-  const anno = +o.slice(0, 4), demo = true;
-  const sq = [['Under 13', 'U13 maschile', 'Luca Ferraro', 35, anno - 13], ['Under 14', 'U14 maschile', 'Paolo Neri', 40, anno - 14], ['Under 16', 'U16 maschile', 'Marco Galli', 45, anno - 16]]
-    .map(([nome, categoria, allenatore, quotaMensile, nascita]) => ({ id: crypto.randomUUID(), nome, categoria, stagione: stag, allenatore, telefonoAllenatore: '3330000100', quotaMensile, archiviata: false, demo, nascita }));
-  const cognomi = ['Bianchi', 'Colombo', 'Esposito', 'Ferri', 'Greco', 'Longo', 'Gallo', 'Conti', 'Marchetti', 'Costa', 'Fontana', 'Moretti', 'Barbieri', 'Lombardi', 'Rinaldi',
-    'Caruso', 'Ferrara', 'Santoro', 'Mariani', 'Rizzi', 'Monti', 'Cattaneo', 'Martini', 'Leone', 'Serra', 'Villa', 'Pellegrini', 'Palumbo', 'Sanna', 'Farina'];
-  const nomi = ['Luca', 'Andrea', 'Marco', 'Davide', 'Paolo', 'Simone', 'Pietro', 'Elia', 'Leo', 'Tommaso', 'Matteo', 'Gabriele', 'Riccardo', 'Lorenzo', 'Edoardo',
-    'Filippo', 'Giacomo', 'Samuele', 'Nicolò', 'Alessio', 'Michele', 'Diego', 'Emanuele', 'Giulio', 'Federico', 'Stefano', 'Alberto', 'Daniele', 'Enea', 'Mattia'];
-  const atleti = cognomi.map((cognome, i) => {
-    const s = sq[i % 3], mese = String(1 + (i * 5) % 12).padStart(2, '0'), giorno = String(1 + (i * 7) % 27).padStart(2, '0');
-    return { id: crypto.randomUUID(), cognome, nome: nomi[i], dataNascita: `${s.nascita}-${mese}-${giorno}`, squadraId: s.id, maglia: String(4 + (i * 3) % 20),
-      scadenzaCertificato: piuGiorni(o, [-12, 9, 25, 120, 200, 300][i % 6]), telefono: '', email: '', codiceFiscale: '', note: '', attivo: true, demo,
-      genitori: [{ nome: `${['Anna', 'Maria', 'Laura', 'Sara', 'Elena'][i % 5]} ${cognome}`, relazione: 'madre', telefono: `33300${String(1000 + i).slice(-4)}0` }] };
+
+// ---------------------------------------------------------------- lettura degli elenchi incollati
+const maiuscole = t => (t === t.toUpperCase() || t === t.toLowerCase() ? t.toLowerCase().replace(/(^|[\s'’\-])(\p{L})/gu, (_, a, b) => a + b.toUpperCase()) : t);
+function dataDaTesto(g, m, a) {
+  if (a === undefined) {                                   // senza anno: quello della stagione
+    const inizio = +(IMP.stagione || stagioneDi(oggi())).slice(0, 4);
+    a = +m >= 7 ? inizio : inizio + 1;
+  } else if (String(a).length === 2) a = +a + (+a > +oggi().slice(2, 4) ? 1900 : 2000);
+  const d = new Date(Date.UTC(+a, +m - 1, +g));
+  return d.getUTCDate() === +g && d.getUTCMonth() === +m - 1 ? d.toISOString().slice(0, 10) : null;
+}
+function leggiElencoAtleti(form) {
+  const sq = form.squadraId.value || null, righe = [], errori = [];
+  form.testo.value.split('\n').map(r => r.trim()).filter(Boolean).forEach((riga, n) => {
+    let resto = riga, dataNascita = '', telefono = '', cognome, nome;
+    const dt = resto.match(/(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4}|\d{2})/);
+    if (dt) { dataNascita = dataDaTesto(dt[1], dt[2], dt[3]) || ''; resto = resto.replace(dt[0], ' '); }
+    const tel = resto.match(/\+?\d[\d\s./\-]{6,}\d/);
+    if (tel) { telefono = tel[0].replace(/[^\d+]/g, ''); resto = resto.replace(tel[0], ' '); }
+    const campi = resto.split(/[;\t,]/).map(x => x.trim()).filter(Boolean);
+    if (campi.length >= 2) [cognome, nome] = campi;
+    else { const parole = (campi[0] || '').split(/\s+/).filter(Boolean); nome = parole.pop(); cognome = parole.join(' '); }
+    if (!cognome || !nome) return errori.push(`Riga ${n + 1}: "${riga}" — servono cognome e nome`);
+    if (dt && !dataNascita) return errori.push(`Riga ${n + 1}: data non valida "${dt[0]}"`);
+    cognome = maiuscole(cognome); nome = maiuscole(nome);
+    const anni = eta(dataNascita), genitore = telefono && (anni === null || anni < 18);
+    righe.push({ cognome, nome, dataNascita, squadraId: sq, maglia: '', scadenzaCertificato: '', telefono: genitore ? '' : telefono, email: '', codiceFiscale: '', note: '', attivo: true,
+      genitori: genitore ? [{ nome: '', relazione: 'madre', telefono }] : [],
+      doppio: D.atleti.some(x => norm(x.cognome) === norm(cognome) && norm(x.nome) === norm(nome) && (!dataNascita || !x.dataNascita || x.dataNascita === dataNascita)) });
   });
-  const scad = mm => `${mm}-${String(+IMP.giornoScadenza || 10).padStart(2, '0')}`;
-  const quote = atleti.flatMap(a => [mPrima, m].map(mm => ({ id: crypto.randomUUID(), atletaId: a.id, mese: mm, descrizione: `Quota ${nomeMese(mm)}`,
-    importo: sq.find(s => s.id === a.squadraId).quotaMensile, scadenza: scad(mm), demo })));
-  const pagamenti = [];
-  atleti.forEach((a, i) => {
-    const [q1, q2] = quote.filter(q => q.atletaId === a.id);
-    if (i % 4 !== 3) pagamenti.push({ id: crypto.randomUUID(), atletaId: a.id, data: piuGiorni(q1.scadenza, -(i % 5)), importo: q1.importo, metodo: i % 3 ? 'contanti' : 'bonifico', nota: '', parti: [{ quotaId: q1.id, importo: q1.importo }], demo });
-    if (i % 3 === 0 && q2.scadenza <= o) pagamenti.push({ id: crypto.randomUUID(), atletaId: a.id, data: o, importo: q2.importo, metodo: 'contanti', nota: '', parti: [{ quotaId: q2.id, importo: q2.importo }], demo });
-    if (i % 7 === 1) pagamenti.push({ id: crypto.randomUUID(), atletaId: a.id, data: o, importo: 20, metodo: 'contanti', nota: 'acconto', parti: [{ quotaId: q2.id, importo: 20 }], demo });
+  return { righe, errori };
+}
+function anteprimaAtleti(form) {
+  const { righe, errori } = leggiElencoAtleti(form);
+  if (!righe.length && !errori.length) return '';
+  const nuove = righe.filter(r => !r.doppio).length;
+  return `<p><b>${plur(nuove, 'atleta pronto', 'atleti pronti')}</b> da importare${righe.length - nuove ? `, ${righe.length - nuove} già presenti (saltati)` : ''}.</p>
+    ${errori.length ? `<div class="card rosso piccolo">${errori.map(esc).join('<br>')}</div>` : ''}
+    <div class="lista">${righe.slice(0, 40).map(r => `<div class="riga"><div class="testo"><strong>${esc(r.cognome)} ${esc(r.nome)}</strong>
+      <span>${[dataIt(r.dataNascita), r.genitori[0]?.telefono ? 'tel. genitore ' + r.genitori[0].telefono : r.telefono].filter(Boolean).map(esc).join(' · ') || '—'}</span></div>
+      ${r.doppio ? '<span class="tag">già presente</span>' : ''}</div>`).join('')}</div>`;
+}
+function leggiCalendario(form) {
+  const sq = form.squadraId.value, chiave = norm(form.chiave.value), righe = [], errori = [];
+  form.testo.value.split('\n').map(r => r.trim()).filter(Boolean).forEach((riga, n) => {
+    let resto = ' ' + riga.replace(/\s+/g, ' ') + ' ', data = null, ora = '', luogo = '', casa = null, avversario = '';
+    const at = resto.indexOf('@');
+    if (at >= 0) { luogo = resto.slice(at + 1).trim(); resto = resto.slice(0, at) + ' '; }
+    let m = resto.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) data = dataDaTesto(m[3], m[2], m[1]);
+    else if ((m = resto.match(/(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{4}|\d{2}))?/) || resto.match(/(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})/))) data = dataDaTesto(m[1], m[2], m[3]);
+    if (m) resto = resto.replace(m[0], ' ');
+    const h = resto.match(/\b(\d{1,2})[:.](\d{2})\b/);
+    if (h && +h[1] < 24 && +h[2] < 60) { ora = `${h[1].padStart(2, '0')}:${h[2]}`; resto = resto.replace(h[0], ' '); }
+    resto = resto.replace(/(?<=\s)(luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica|lun|mar|mer|gio|ven|sab|dom)\.?(?=\s)/gi, ' ').replace(/^\s*\d{4,7}\s/, ' ').replace(/\bore\b/gi, ' ');
+    if (/\b(in )?trasferta\b|\bfuori\b/i.test(resto)) { casa = false; resto = resto.replace(/\b(in )?trasferta\b|\bfuori\b/gi, ' '); }
+    if (/\b(in )?casa\b/i.test(resto)) { casa = true; resto = resto.replace(/\b(in )?casa\b/gi, ' '); }
+    const lati = resto.split(/\s[-–—]\s|\svs\.?\s|\scontro\s/i).map(x => x.replace(/[,·;]+/g, ' ').trim()).filter(Boolean);
+    if (lati.length === 2) {
+      const noi = lati.findIndex(x => chiave && norm(x).includes(chiave));
+      if (noi < 0) return errori.push(`Riga ${n + 1}: non trovo "${form.chiave.value}" tra le due squadre`);
+      avversario = lati[1 - noi];
+      if (casa === null) casa = noi === 0;
+    } else avversario = lati.join(' ');
+    avversario = maiuscole(avversario.replace(/\s+/g, ' ').trim());
+    if (!data) return errori.push(`Riga ${n + 1}: "${riga}" — manca una data valida`);
+    if (!avversario) return errori.push(`Riga ${n + 1}: "${riga}" — manca l'avversario`);
+    righe.push({ squadraId: sq, avversario, campionato: form.campionato.value.trim(), data, ora, casa: casa ?? true, luogo: maiuscole(luogo), stato: 'programmata',
+      puntiNostri: null, puntiAvversari: null, note: '', doppio: D.partite.some(p => p.squadraId === sq && p.data === data && norm(p.avversario) === norm(avversario)) });
   });
-  const allenamenti = [[0, 0, '17:00', '18:30'], [0, 2, '17:00', '18:30'], [1, 1, '18:30', '20:00'], [1, 3, '18:30', '20:00'], [2, 0, '18:30', '20:00'], [2, 4, '18:30', '20:00']]
-    .map(([s, giorno, inizio, fine]) => ({ id: crypto.randomUUID(), squadraId: sq[s].id, giorno, inizio, fine, campo: s === 2 ? 'Palazzetto' : 'Palestra comunale', allenatore: '', demo }));
-  const avversari = ['Basket Orione', 'Polisportiva Aurora', 'Valverde Basket', 'Gli Aironi', 'Basket Libeccio', 'Atletico Collina'];
-  const partite = [];
-  sq.forEach((s, k) => {
-    [-17, -10, -3, 4, 11, 18].forEach((dd, j) => {
-      const data = piuGiorni(o, dd + k), passata = data < o, casa = j % 2 === 0;
-      const noi = 40 + ((j * 13 + k * 7) % 30), loro = 38 + ((j * 11 + k * 5) % 32);
-      partite.push({ id: crypto.randomUUID(), squadraId: s.id, avversario: avversari[(j + k) % 6], campionato: `${s.nome} Regionale`, data, ora: ['10:00', '16:30', '18:00'][j % 3],
-        casa, luogo: casa ? (k === 2 ? 'Palazzetto' : 'Palestra comunale') : `Palestra ${avversari[(j + k) % 6]}`, stato: passata ? 'disputata' : j === 4 && k === 1 ? 'rinviata' : 'programmata',
-        puntiNostri: passata ? noi : null, puntiAvversari: passata ? loro : null, note: '', demo });
-    });
-  });
-  const ora = new Date().toISOString(), timbro = x => ({ ...x, creato: ora, modificato: ora });
-  const righe = { squadre: sq.map(({ nascita, ...s }) => timbro(s)), atleti: atleti.map(timbro), quote: quote.map(timbro), pagamenti: pagamenti.map(timbro), allenamenti: allenamenti.map(timbro), partite: partite.map(timbro) };
-  await db.scrivi(righe);
-  for (const [s, l] of Object.entries(righe)) D[s].push(...l);
+  return { righe, errori };
+}
+function anteprimaPartite(form) {
+  const { righe, errori } = leggiCalendario(form);
+  if (!righe.length && !errori.length) return '';
+  const nuove = righe.filter(r => !r.doppio).length;
+  return `<p><b>${plur(nuove, 'partita pronta', 'partite pronte')}</b> da importare${righe.length - nuove ? `, ${righe.length - nuove} già presenti (saltate)` : ''}.</p>
+    ${errori.length ? `<div class="card rosso piccolo">${errori.map(esc).join('<br>')}</div>` : ''}
+    <div class="lista">${righe.slice(0, 40).map(r => `<div class="riga"><div class="data-box${r.casa ? ' casa' : ''}"><b>${+r.data.slice(8)}</b><span>${MESI[+r.data.slice(5, 7) - 1].slice(0, 3)}</span></div>
+      <div class="testo"><strong>${esc(r.avversario)}</strong><span>${GG[gSett(r.data)]} ${dataIt(r.data)}${r.ora ? ' · ' + r.ora : ''} · ${r.casa ? 'Casa' : 'Trasferta'}${r.luogo ? ' · ' + esc(r.luogo) : ''}</span></div>
+      ${r.doppio ? '<span class="tag">già presente</span>' : ''}</div>`).join('')}</div>`;
 }
 
 // ---------------------------------------------------------------- avvio

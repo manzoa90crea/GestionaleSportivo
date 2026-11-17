@@ -29,7 +29,6 @@ Online va solo il programma; tutti i dati restano nel telefono (IndexedDB di Chr
 1. Apri l'indirizzo con **Chrome** sul telefono Android.
 2. Menu ⋮ → **Installa app** (o "Aggiungi a schermata Home" → Installa).
 3. Apri l'app dall'icona, inserisci il nome della società, la stagione e un PIN da 4 a 6 cifre.
-4. Per provarla: Impostazioni (ingranaggio) → **Carica dati di prova**. Sono dati inventati e si cancellano con "Elimina dati di prova". Funziona solo con l'archivio vuoto.
 
 ## 3. Uso quotidiano
 
@@ -39,6 +38,13 @@ Online va solo il programma; tutti i dati restano nel telefono (IndexedDB di Chr
 - **Pagamento:** l'importo salda prima le quote più vecchie; i pagamenti parziali sono gestiti da soli. Un pagamento sbagliato si annulla dalla scheda dell'atleta.
 - **Insoluti:** quote scadute e non pagate, filtrabili per squadra, con promemoria WhatsApp già scritto per il genitore.
 - **Calendario:** partite (prossime, giocate, annullate), vista settimanale con partite e allenamenti, vista mensile, orari fissi degli allenamenti. Dopo la partita: tocca la partita → Risultato.
+
+## Inserimento rapido
+
+- **Incolla elenco atleti** (pagina Atleti o scheda squadra): incolli una lista, un atleta per riga, ad esempio `Rossi Mario 05/04/2013 333 1234567`. Senza separatori l'ultima parola è il nome; per nomi o cognomi doppi usa `;` (`De Luca; Gennaro Maria; 12/01/2012`). L'anteprima mostra cosa verrà importato, segnala le righe errate e salta chi è già presente. Il telefono va al genitore se l'atleta è minorenne.
+- **Salva e aggiungi** (nuovo atleta): salva e riapre subito il modulo vuoto con la stessa squadra. I campi secondari sono raccolti in "Altri dati".
+- **Incasso veloce** (Pagamenti): scegli squadra e mese, spunta chi ha pagato e salvi tutto insieme. Se la quota del mese non esiste ancora viene creata.
+- **Incolla calendario partite** (Calendario → Partite): una partita per riga, ad esempio `14/11 20:00 casa Basket Aurora @ Palestra comunale` oppure `08/11/2026 10:00 Pallacanestro Marano - Rainbow Basket Saviano`. Con due squadre separate da "-" la prima gioca in casa; la vostra si riconosce dal nome indicato nel modulo. Le partite già presenti vengono saltate.
 
 ## 4. Backup: almeno una volta a settimana
 

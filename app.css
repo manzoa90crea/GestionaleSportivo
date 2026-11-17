@@ -191,3 +191,15 @@ legend { font-size: 13px; font-weight: 600; color: var(--muto); padding: 0; }
 #toast.err { background: var(--rosso); }
 .aggiorna { position: fixed; top: calc(8px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 25; border: 0; border-radius: 22px;
   background: var(--ink); color: #fff; min-height: 44px; padding: 0 18px; font: 600 14px system-ui, Roboto, sans-serif; box-shadow: 0 4px 14px #0003; }
+
+/* Inserimento rapido */
+.fila.sopra { margin: -2px 0 12px; }
+details.altri { margin: 4px 0 14px; border-top: 1px solid var(--linea); padding-top: 10px; }
+details.altri summary { min-height: 48px; display: flex; align-items: center; font-weight: 600; color: var(--acc2); cursor: pointer; list-style: none; }
+details.altri summary::before { content: "+"; width: 24px; font-size: 20px; }
+details.altri[open] summary::before { content: "–"; }
+label.riga.voce-check { margin: 0; font-size: 16px; font-weight: 500; color: var(--ink); }
+label.riga.voce-check input { width: 26px; height: 26px; min-height: 26px; margin: 0; accent-color: var(--acc); flex: none; }
+label.riga.voce-check.spenta { opacity: .55; }
+.card.rosso { background: var(--rosso-bg); border-color: #f3c4c4; }
+.foglio footer .btn { flex: 1; }
